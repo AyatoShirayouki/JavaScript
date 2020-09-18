@@ -1,0 +1,432 @@
+<!DOCTYPE HTML> 
+<html> 
+	<head> 
+		<title> 
+			Directory tree
+		</title>
+		<style>
+			#file_UI{
+				display: none;
+			}
+			#folder_UI{
+				display: none;
+			}
+			#hide{
+				display: none;
+			}
+			#delete{
+				display: none;
+			}
+			#hide:hover{
+				background-color: lightcoral;
+			}
+			#delete:hover{
+				background-color: lightcoral;
+			}
+			button{
+				background-color: lightgrey;
+			}
+			p span {
+  				display: block;
+			}
+		</style>
+	</head> 
+	
+	<body>
+		<div style="float: right;">
+
+			<button id="add_file">Add file</button>
+			<button id="create_folder">Create folder</button>
+
+			<div id="file_UI">
+				<label for="file_name">File name:</label>
+  				<input type="text" id="file_name">
+				<h2 class="choose_file_location">Choose file location: </h2>
+				<div id="file_UI_folder_list"></div>
+			</div>
+
+			<div id="folder_UI">
+				<label for="folder_name">Folder name:</label>
+  				<input type="text" id="folder_name">
+				<h2 class="choose_folder_location">Choose folder location: </h2>
+				<div id="folder_UI_folder_list"></div>
+			</div>
+
+			<button id="hide">Hide</button>
+			
+		</div>
+
+		<ul style='list-style-type:none' id="folders"></ul>
+		<button id="delete">Delete</button>
+
+		<script>
+			var folders = {
+				type: 'dir',
+				name: 'Root',
+				children: [
+					{
+						type: 'file',
+						name: 'index.html',
+					},
+					{
+						type: 'dir',
+						name: 'scripts',
+						children: [
+							{
+								type: 'file',
+								name: 'index.js'
+							},
+							{
+								type: 'file',
+								name: 'app.js'
+							},
+							{
+								type: 'file',
+								name: 'microphone.js'
+							},
+							{
+								type: 'dir',
+								name: 'query',
+								children: [
+									{
+										type: 'file',
+										name: 'jquery.js'
+									},
+									{
+										type: 'file',
+										name: 'underscore.js'
+									}
+								]
+							}
+						]
+					},
+					{
+						type: 'dir',
+						name: 'css',
+						children: [
+							{
+								type: 'file',
+								name: 'index.css'
+							},
+							{
+								type: 'file',
+								name: 'main.css'
+							}
+						]
+					},
+					{
+						type: 'dir',
+						name: 'database',
+						children: [
+							{
+								type: 'file',
+								name: 'users.sql'
+							},
+							{
+								type: 'file',
+								name: 'admins.sql'
+							}
+						]
+					}
+				]
+			};
+
+			// функция вземаща първото дете
+			function getFirstChild(node){
+				return node.name;
+			}
+
+			// анимация за изчезване
+			function fadeOut(el) {
+            	el.style.opacity = 1;
+            	(function fade() {
+					var val = parseFloat(el.style.opacity);
+                	if ((el.style.opacity -= .1) < 0) {
+                    	el.style.display = "none";
+                	} else {
+                    	requestAnimationFrame(fade);
+                	}
+            	})();
+        	}
+
+			// анимация за появяване
+        	function fadeIn(el) {
+            	el.style.opacity = 0;
+            	el.style.display = "block";
+            	(function fade() {
+                	var val = parseFloat(el.style.opacity);
+                	if (!((val += .1) > 1)) {
+                    	el.style.opacity = val;
+                    	requestAnimationFrame(fade);
+                	}
+            	})();
+        	}
+
+			var collection = []; // колекция от <a> елеменети с имената на папките
+			var counter = -1; // промнелива за създаване на id
+
+			// конструктор за колекцията от <a> елеменети с имената на папките
+			function a_builder(href, onclickFunction, text){
+				return '<p>' + '<span>' + '<a href=' + '"' + href + '"' + 'id="' + text + '"' + 'onclick=' + '"' + onclickFunction + '"' + '>'+ text + '</a>' + '</span>' + '</p>';
+			}
+
+			function display(node, element) {
+                var li = document.createElement('li');
+                var ul = document.createElement('ul');
+				var a = document.createElement('a');
+				var checbox = document.createElement('input');
+
+				checbox.type = 'checkbox';
+				a.href = '#';
+				ul.className = 'ul';
+
+				li.style.listStyleType = 'none';
+				a.style.color = 'green';
+				ul.style.display = 'block';
+
+				a.innerText = node.name;
+				li.innerText = node.name;
+				
+				if(node.name != null && node.type != null){
+					li.appendChild(checbox);
+				}
+
+				element.appendChild(li);
+
+				a.onclick = function() {
+						if(ul.style.display == 'block'){
+							fadeOut(ul);
+						}
+						else if(ul.style.display == 'none'){
+							fadeIn(ul);
+						}
+				}
+
+				// функция check-ваща поддиректории
+				checbox.addEventListener('change', function(){
+					if(checbox.className = 'check' && checbox.checked == true){
+						var list = ul.getElementsByTagName('input');
+						fadeIn(document.getElementById('delete'));
+						var deleteBtn = document.getElementById('delete');
+
+						for (let c in list) {
+							list[c].checked = true;
+						}
+
+						// delete functionality
+						deleteBtn.addEventListener('click', function(){
+							if(node.type == 'dir'){
+								if(node.children.length >= 0){
+									for (let j = 0; j < node.children.length; j++) {
+										node.children[j].type = null;
+										node.children[j].name = null;
+									}
+									node.type = null;
+									node.name = null;
+								}
+							}
+
+							else if(node.type == 'file'){
+								node.type = null;
+								node.name = null;
+							}
+							
+							document.getElementById('folders').innerHTML = null;
+							display(folders, document.getElementById("folders"));
+							uiChecker(node);///// not working
+							
+						}/* uiChecker(node) -kind of works-*/);
+					}
+					else if(checbox.className = 'check' && checbox.checked == false){
+						var list = ul.getElementsByTagName('input');
+						fadeOut(document.getElementById('delete'));
+						for (let c in list) {
+							list[c].checked = false;
+						}
+					}
+				});
+				
+				if (node.type == 'dir') {
+					if (node.children.length >= 0) {
+						li.innerText = '';
+
+						if(node.name != null && node.type != null){
+							li.appendChild(checbox);
+						}
+
+						checbox.className = 'check';
+
+						li.appendChild(a);
+						counter++;					
+
+						collection += a_builder('#', 'add(node=folders,this)', a.innerHTML);
+						
+        				li.appendChild(ul);
+        				for (var i=0; i < node.children.length; i++) {
+           					display(node.children[i], ul);
+        				}
+					}
+                }
+			}
+
+			// конструктор за добавяне на файлове
+			function fileConstructor(name){
+				return {type: 'file', name: name}
+			}
+
+			// конструктор за добавяне на папки
+			function folderConstructor(name){
+				return {type: 'dir', name: name, children: []}
+			}
+
+			// функция добавяща файлове и папки
+			function add(node=folders,element){
+				var fileName = document.getElementById("file_name").value;
+				var folderName = document.getElementById('folder_name').value;
+				var name = element.textContent;
+
+				if(fileName != '' && folderName == ''){
+					if(name == getFirstChild(node)){
+						node.children.push(fileConstructor(fileName));
+
+						document.getElementById("file_name").value = '';
+									
+						document.getElementById('folders').innerHTML = null;
+						display(folders, document.getElementById("folders"));
+					}
+					
+					else if (node.type == 'dir') {
+						if (node.children.length) {
+							for (var i=0; i < node.children.length; i++) {
+								if(node.children[i].name == name){
+									node.children[i].children.push(fileConstructor(fileName));
+
+									document.getElementById("file_name").value = '';
+									
+									document.getElementById('folders').innerHTML = null;
+									display(folders, document.getElementById("folders"));
+								}
+           						add(node.children[i], element);
+        					}
+						}
+                	}	
+				}
+
+				else if(folderName != '' && fileName == ''){
+					if(name == getFirstChild(node)){
+						node.children.push(folderConstructor(folderName));
+
+						document.getElementById("folder_name").value = '';
+						document.getElementById('folders').innerHTML = null;
+
+						document.getElementById('file_UI_folder_list').innerHTML += a_builder('#', 'add(node=folders,this)', folderName);
+						document.getElementById('folder_UI_folder_list').innerHTML += a_builder('#', 'add(node=folders,this)', folderName);
+
+						display(folders, document.getElementById("folders"));
+					}
+
+					else if (node.type == 'dir') {
+						if (node.children.length) {
+							for (var i=0; i < node.children.length; i++) {
+								if(node.children[i].name == name){
+									node.children[i].children.push(folderConstructor(folderName));
+
+									document.getElementById("folder_name").value = '';
+									document.getElementById('folders').innerHTML = null;
+
+									document.getElementById('file_UI_folder_list').innerHTML += a_builder('#', 'add(node=folders,this)', folderName);
+									document.getElementById('folder_UI_folder_list').innerHTML += a_builder('#', 'add(node=folders,this)', folderName);
+
+									display(folders, document.getElementById("folders"));
+								}
+           						add(node.children[i], element);
+        					}
+						}
+                	}	
+				}
+			}
+
+			// тестова функция
+			function addFile1(node = folders){
+				if (node.type == 'dir') {
+					if (node.children.length) {
+						for (var i=0; i < node.children.length; i++) {
+							
+           					addFile1(node.children[i]);
+        				}
+					}
+                }	
+			}
+
+			function uiChecker(node){
+				var el = document.getElementById('file_UI_folder_list').getElementsByTagName('a');
+				var el2 = document.getElementById('folder_UI_folder_list').getElementsByTagName('a');
+				console.log('-------------------');
+				if (node.type == 'dir') {
+					if (node.children.length >= 0) {
+						for (let y = 0; y < el.length; y++) {
+							if(node.name == el[y].innerHTML){
+								el[y].remove();
+							}
+						}
+						
+						for (let z = 0; z < el2.length; z++) {
+							if(node.name == el2[z].innerHTML){
+								el2[z].remove();
+							}
+						}
+						
+						for (var i=0; i < node.children.length; i++) {
+           					uiChecker(node.children[i]);
+        				}
+					}
+                }	
+			};
+
+			// функция добавяща имената на папките от дървото в даден елемент под формата на линкове
+			function displayFolders(element){
+				element.innerHTML = collection;
+			}
+
+			// анимация за бутона add file
+			document.getElementById('add_file').onclick = function(){
+				document.getElementById('add_file').style.backgroundColor = 'lightgreen';
+				document.getElementById('create_folder').style.backgroundColor = 'lightgray';
+
+				fadeIn(document.getElementById('file_UI'));
+				document.getElementById('folder_UI').style.display = 'none';
+
+				document.getElementById('hide').style.display = 'block';
+				document.getElementById("folder_name").value = '';
+			};
+
+			// анимация за бутона create folder
+			document.getElementById('create_folder').onclick = function(){
+				document.getElementById('add_file').style.backgroundColor = 'lightgray';
+				document.getElementById('create_folder').style.backgroundColor = 'lightgreen';
+
+				fadeIn(document.getElementById('folder_UI'));
+				document.getElementById('file_UI').style.display = 'none';
+
+				document.getElementById('hide').style.display = 'block';
+				document.getElementById("file_name").value = '';
+			};
+
+			// анимация за бутона hide
+			document.getElementById('hide').onclick = function(){
+				document.getElementById('add_file').style.backgroundColor = 'lightgray';
+				document.getElementById('create_folder').style.backgroundColor = 'lightgray';
+
+				fadeOut(document.getElementById('file_UI'));
+				fadeOut(document.getElementById('folder_UI'));
+
+				document.getElementById('hide').style.display = 'none';
+			};
+
+			document.addEventListener('DOMContentLoaded', function(){
+			 display(folders, document.getElementById("folders"));
+			  displayFolders(document.getElementById('file_UI_folder_list'));
+			   displayFolders(document.getElementById('folder_UI_folder_list'));} );
+        </script>
+	</body> 
+</html> 
